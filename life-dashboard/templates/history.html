@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}History - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">History</h1>
+<p class="page-subtitle">Ultime 50 voci per ciascuna categoria.</p>
+
+<section class="panel">
+    <h2>Alimenti</h2>
+    {% if food %}
+    <table class="data-table">
+        <thead><tr><th>Data</th><th>Pasto</th><th>Alimento</th><th>Kcal</th><th>Proteine</th></tr></thead>
+        <tbody>
+            {% for f in food %}
+            <tr>
+                <td>{{ f.date }}</td><td>{{ f.meal }}</td><td>{{ f.food_name }}</td>
+                <td>{{ f.calories | round(0) | int }}</td><td>{{ f.protein | round(0) | int }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="empty-state">Nessun dato.</p>{% endif %}
+</section>
+
+<section class="panel">
+    <h2>Spese</h2>
+    {% if expenses %}
+    <table class="data-table">
+        <thead><tr><th>Data</th><th>Categoria</th><th>Descrizione</th><th>Importo</th></tr></thead>
+        <tbody>
+            {% for e in expenses %}
+            <tr>
+                <td>{{ e.date }}</td><td>{{ e.category }}</td><td>{{ e.description or "—" }}</td>
+                <td>€{{ "%.2f"|format(e.amount) }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="empty-state">Nessun dato.</p>{% endif %}
+</section>
+
+<section class="panel">
+    <h2>Statistiche giornaliere</h2>
+    {% if stats %}
+    <table class="data-table">
+        <thead><tr><th>Data</th><th>Sonno</th><th>Studio</th><th>Umore</th></tr></thead>
+        <tbody>
+            {% for s in stats %}
+            <tr>
+                <td>{{ s.date }}</td>
+                <td>{{ s.sleep_hours if s.sleep_hours is not none else "—" }}</td>
+                <td>{{ s.study_hours if s.study_hours is not none else "—" }}</td>
+                <td>{{ s.mood if s.mood is not none else "—" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="empty-state">Nessun dato.</p>{% endif %}
+</section>
+
+<section class="panel">
+    <h2>Peso</h2>
+    {% if weights %}
+    <table class="data-table">
+        <thead><tr><th>Data</th><th>Peso (kg)</th></tr></thead>
+        <tbody>
+            {% for w in weights %}
+            <tr><td>{{ w.date }}</td><td>{{ w.weight_kg }}</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}<p class="empty-state">Nessun dato.</p>{% endif %}
+</section>
+{% endblock %}

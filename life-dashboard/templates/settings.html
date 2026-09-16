@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Settings - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Impostazioni</h1>
+
+<section class="panel">
+    <form method="post" action="{{ url_for('update_settings') }}" class="grid-form">
+        <label>Obiettivo calorico giornaliero (kcal)
+            <input type="number" step="1" name="calorie_target" value="{{ settings.calorie_target }}" required>
+        </label>
+        <label>Obiettivo proteine giornaliero (g)
+            <input type="number" step="1" name="protein_target" value="{{ settings.protein_target }}" required>
+        </label>
+        <label>Valuta
+            <select name="currency">
+                <option value="EUR" {% if settings.currency == "EUR" %}selected{% endif %}>EUR (€)</option>
+                <option value="USD" {% if settings.currency == "USD" %}selected{% endif %}>USD ($)</option>
+                <option value="GBP" {% if settings.currency == "GBP" %}selected{% endif %}>GBP (£)</option>
+            </select>
+        </label>
+        <button type="submit" class="btn btn-primary">Salva impostazioni</button>
+    </form>
+</section>
+
+<section class="panel">
+    <h2>Informazioni</h2>
+    <p>Life Dashboard è un'applicazione personale locale. Tutti i dati sono salvati in un database SQLite sul tuo computer, senza sincronizzazione cloud.</p>
+</section>
+{% endblock %}

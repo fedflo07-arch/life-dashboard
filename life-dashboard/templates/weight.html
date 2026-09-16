@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}Weight - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Peso corporeo</h1>
+
+<section class="panel">
+    <h2>Registra peso</h2>
+    <form method="post" action="{{ url_for('add_weight') }}" class="grid-form">
+        <label>Data
+            <input type="date" name="date" value="{{ today }}" required>
+        </label>
+        <label>Peso (kg)
+            <input type="number" step="0.1" name="weight_kg" required placeholder="es. 85.0">
+        </label>
+        <button type="submit" class="btn btn-primary">Salva</button>
+    </form>
+</section>
+
+<section class="panel">
+    <h2>Andamento</h2>
+    <div class="chart-box"><canvas id="chartWeightHistory"></canvas></div>
+</section>
+
+<section class="panel">
+    <h2>Storico</h2>
+    {% if entries %}
+    <table class="data-table">
+        <thead><tr><th>Data</th><th>Peso (kg)</th><th></th></tr></thead>
+        <tbody>
+            {% for e in entries %}
+            <tr>
+                <td>{{ e.date }}</td>
+                <td>{{ e.weight_kg }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('delete_weight', entry_id=e.id) }}">
+                        <button type="submit" class="btn-icon" title="Elimina">✕</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="empty-state">Nessun peso registrato ancora.</p>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const entries = {{ entries | tojson }};
+    const labels = entries.map(e => e.date).reverse();
+    const values = entries.map(e => e.weight_kg).reverse();
+    const weightColor = getComputedStyle(document.documentElement).getPropertyValue('--color-weight').trim();
+    const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
+
+    if (labels.length > 0) {
+        new Chart(document.getElementById('chartWeightHistory'), {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Peso (kg)',
+                    data: values,
+                    borderColor: weightColor,
+                    backgroundColor: weightColor + '26',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { grid: { color: gridColor } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

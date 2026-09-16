@@ -1,0 +1,176 @@
+{% extends "base.html" %}
+{% block title %}Money - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Money</h1>
+
+<div class="section-heading">This month</div>
+<section class="card-grid">
+    <div class="card">
+        <div class="card-label">Spese oggi</div>
+        <div class="card-value">€{{ "%.2f"|format(total_today) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Spese questo mese</div>
+        <div class="card-value">€{{ "%.2f"|format(total_month) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Entrate questo mese</div>
+        <div class="card-value" style="color: var(--success);">€{{ "%.2f"|format(income_month) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Saldo netto (mese)</div>
+        <div class="card-value" style="color: {{ 'var(--success)' if net_month >= 0 else 'var(--danger)' }};">
+            {{ '+' if net_month >= 0 else '' }}€{{ "%.2f"|format(net_month) }}
+        </div>
+        <div class="card-sub">Entrate − Spese</div>
+    </div>
+</section>
+
+<section class="card-grid" style="margin-top: 4px;">
+    <div class="card">
+        <div class="card-label">Spese questa settimana</div>
+        <div class="card-value">€{{ "%.2f"|format(total_week) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Totale spese storico</div>
+        <div class="card-value">€{{ "%.2f"|format(total_all) }}</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Totale entrate storico</div>
+        <div class="card-value" style="color: var(--success);">€{{ "%.2f"|format(income_all) }}</div>
+    </div>
+</section>
+
+<div class="section-heading">Add movement</div>
+<section class="panel">
+    <form method="post" action="{{ url_for('add_expense') }}" class="grid-form" id="movementForm">
+        <label>Tipo
+            <select name="type" id="typeSelect" required>
+                <option value="expense">Spesa</option>
+                <option value="income">Entrata</option>
+            </select>
+        </label>
+        <label>Data
+            <input type="date" name="date" value="{{ today }}" required>
+        </label>
+        <label>Importo (€)
+            <input type="number" step="0.01" name="amount" required placeholder="es. 12.50">
+        </label>
+        <label>Categoria
+            <select name="category" id="categorySelect" required>
+                {% for c in expense_categories %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+            </select>
+        </label>
+        <label>Descrizione (opzionale)
+            <input type="text" name="description" placeholder="es. Pizza con amici">
+        </label>
+        <button type="submit" class="btn btn-primary">Aggiungi</button>
+    </form>
+</section>
+
+<div class="section-heading">Spese per categoria (questo mese)</div>
+<section class="panel">
+    <div class="chart-box"><canvas id="chartCategory"></canvas></div>
+</section>
+
+<div class="section-heading">History</div>
+<section class="panel">
+    <form method="get" class="inline-form">
+        <label>Mese
+            <input type="month" name="month" value="{{ filter_month }}">
+        </label>
+        <label>Tipo
+            <select name="type">
+                <option value="">Tutti</option>
+                <option value="expense" {% if filter_type == "expense" %}selected{% endif %}>Spese</option>
+                <option value="income" {% if filter_type == "income" %}selected{% endif %}>Entrate</option>
+            </select>
+        </label>
+        <label>Categoria
+            <select name="category">
+                <option value="">Tutte</option>
+                {% for c in expense_categories %}
+                <option value="{{ c }}" {% if c == filter_category %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+                {% for c in income_categories %}
+                <option value="{{ c }}" {% if c == filter_category %}selected{% endif %}>{{ c }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <button type="submit" class="btn">Filtra</button>
+    </form>
+
+    {% if movements %}
+    <table class="data-table">
+        <thead><tr><th>Data</th><th>Tipo</th><th>Categoria</th><th>Descrizione</th><th>Importo</th><th></th></tr></thead>
+        <tbody>
+            {% for m in movements %}
+            <tr>
+                <td>{{ m.date }}</td>
+                <td>{% if m.type == "income" %}Entrata{% else %}Spesa{% endif %}</td>
+                <td>{{ m.category }}</td>
+                <td>{{ m.description or "—" }}</td>
+                <td style="color: {{ 'var(--success)' if m.type == 'income' else 'var(--text)' }};">
+                    {{ '+' if m.type == 'income' else '-' }}€{{ "%.2f"|format(m.amount) }}
+                </td>
+                <td>
+                    <form method="post" action="{{ url_for('delete_expense', expense_id=m.id) }}">
+                        <button type="submit" class="btn-icon" title="Elimina">✕</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="empty-state">Nessun movimento trovato per questo filtro.</p>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Le categorie disponibili cambiano in base al tipo selezionato
+    // (Spesa -> categorie di spesa, Entrata -> categorie di entrata),
+    // così non si può registrare per errore uno stipendio sotto "Gym".
+    const expenseCategories = {{ expense_categories | tojson }};
+    const incomeCategories = {{ income_categories | tojson }};
+    const typeSelect = document.getElementById('typeSelect');
+    const categorySelect = document.getElementById('categorySelect');
+
+    function refreshCategoryOptions() {
+        const categories = typeSelect.value === 'income' ? incomeCategories : expenseCategories;
+        categorySelect.innerHTML = categories.map(c => `<option value="${c}">${c}</option>`).join('');
+    }
+
+    typeSelect.addEventListener('change', refreshCategoryOptions);
+    refreshCategoryOptions();
+
+    const byCategory = {{ by_category | tojson }};
+    const accentColor = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+    const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--chart-grid').trim();
+    if (byCategory.length > 0) {
+        new Chart(document.getElementById('chartCategory'), {
+            type: 'bar',
+            data: {
+                labels: byCategory.map(c => c.category),
+                datasets: [{
+                    label: 'Spesa (€)',
+                    data: byCategory.map(c => c.total),
+                    backgroundColor: accentColor,
+                    borderRadius: 6,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: gridColor } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

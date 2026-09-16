@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% block title %}University - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">University</h1>
+
+<section class="card-grid">
+    <div class="card">
+        <div class="card-label">Media ponderata</div>
+        <div class="card-value">{{ "%.2f"|format(average) if average is not none else "—" }}</div>
+        <div class="card-sub">{{ total_cfu_done | round(0) | int }} CFU superati</div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Obiettivo media</div>
+        <div class="card-value">{{ "%.2f"|format(target_average) if target_average is not none else "—" }}</div>
+        {% if average_gap is not none %}
+            {% if average_gap > 0 %}
+                <div class="card-sub">Ti mancano {{ "%.2f"|format(average_gap) }} punti</div>
+            {% else %}
+                <div class="card-sub">Obiettivo raggiunto ✓</div>
+            {% endif %}
+        {% elif target_average is not none %}
+            <div class="card-sub">Servono esami superati per calcolare la distanza</div>
+        {% else %}
+            <div class="card-sub">Imposta un obiettivo nelle impostazioni sotto</div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-label">CFU rimanenti</div>
+        <div class="card-value">{{ cfu_remaining | round(0) | int }} / {{ uni_settings.total_cfu_required | round(0) | int }}</div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ [(total_cfu_done / uni_settings.total_cfu_required * 100) if uni_settings.total_cfu_required else 0, 100] | min }}%"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Proiezione voto di laurea</div>
+        <div class="card-value">{{ graduation_projection if graduation_projection is not none else "—" }}{% if graduation_projection is not none %} / 110{% endif %}</div>
+        <div class="card-sub">Basata sulla media attuale</div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Aggiungi esame</h2>
+    <p class="page-subtitle">Se inserisci un voto, l'esame viene registrato come superato. Se lasci il voto vuoto e metti solo una data, viene salvato come esame in programma.</p>
+    <form method="post" action="{{ url_for('add_exam') }}" class="grid-form">
+        <label>Nome esame
+            <input type="text" name="name" required placeholder="es. Analisi Matematica 1">
+        </label>
+        <label>CFU
+            <input type="number" step="1" name="cfu" required placeholder="es. 9">
+        </label>
+        <label>Data (prevista o sostenuta)
+            <input type="date" name="exam_date">
+        </label>
+        <label>Voto (lascia vuoto se non ancora sostenuto)
+            <input type="number" min="18" max="30" step="1" name="grade" placeholder="18-30">
+        </label>
+        <label class="checkbox-label">
+            <input type="checkbox" name="honors">
+            Lode
+        </label>
+        <label>Note (opzionale)
+            <input type="text" name="notes" placeholder="es. Prof. Rossi">
+        </label>
+        <button type="submit" class="btn btn-primary">Aggiungi</button>
+    </form>
+</section>
+
+<section class="panel">
+    <h2>Libretto — esami superati</h2>
+    {% if passed_exams %}
+    <table class="data-table">
+        <thead><tr><th>Esame</th><th>CFU</th><th>Data</th><th>Voto</th><th></th></tr></thead>
+        <tbody>
+            {% for e in passed_exams %}
+            <tr>
+                <td>{{ e.name }}</td>
+                <td>{{ e.cfu | round(0) | int }}</td>
+                <td>{{ e.exam_date or "—" }}</td>
+                <td>{{ e.grade }}{% if e.honors %} e lode{% endif %}</td>
+                <td>
+                    <form method="post" action="{{ url_for('delete_exam', exam_id=e.id) }}">
+                        <button type="submit" class="btn-icon" title="Elimina">✕</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="empty-state">Nessun esame superato ancora.</p>
+    {% endif %}
+</section>
+
+<section class="panel">
+    <h2>Esami in programma</h2>
+    {% if upcoming_exams %}
+    <table class="data-table">
+        <thead><tr><th>Esame</th><th>CFU</th><th>Data prevista</th><th>Note</th><th></th></tr></thead>
+        <tbody>
+            {% for e in upcoming_exams %}
+            <tr>
+                <td>{{ e.name }}</td>
+                <td>{{ e.cfu | round(0) | int }}</td>
+                <td>{{ e.exam_date }}</td>
+                <td>{{ e.notes or "—" }}</td>
+                <td>
+                    <form method="post" action="{{ url_for('delete_exam', exam_id=e.id) }}">
+                        <button type="submit" class="btn-icon" title="Elimina">✕</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="empty-state">Nessun esame in programma.</p>
+    {% endif %}
+</section>
+
+<section class="panel">
+    <h2>Orario lezioni settimanale</h2>
+    <form method="post" action="{{ url_for('add_schedule_slot') }}" class="grid-form">
+        <label>Corso
+            <input type="text" name="course_name" required placeholder="es. Analisi Matematica 1">
+        </label>
+        <label>Giorno
+            <select name="day_of_week" required>
+                {% for i in range(7) %}
+                <option value="{{ i }}">{{ weekdays[i] }}</option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>Inizio
+            <input type="time" name="start_time" required>
+        </label>
+        <label>Fine
+            <input type="time" name="end_time" required>
+        </label>
+        <label>Aula (opzionale)
+            <input type="text" name="location" placeholder="es. Aula B3">
+        </label>
+        <button type="submit" class="btn btn-primary">Aggiungi lezione</button>
+    </form>
+
+    <div class="schedule-grid">
+        {% for i in range(7) %}
+        <div class="schedule-day">
+            <h3>{{ weekdays[i] }}</h3>
+            {% if schedule[i] %}
+                {% for slot in schedule[i] %}
+                <div class="schedule-slot">
+                    <div class="schedule-time">{{ slot.start_time }} – {{ slot.end_time }}</div>
+                    <div class="schedule-course">{{ slot.course_name }}</div>
+                    {% if slot.location %}<div class="schedule-location">{{ slot.location }}</div>{% endif %}
+                    <form method="post" action="{{ url_for('delete_schedule_slot', slot_id=slot.id) }}">
+                        <button type="submit" class="btn-icon" title="Elimina">✕</button>
+                    </form>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="empty-state">Nessuna lezione</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Impostazioni università</h2>
+    <p class="page-subtitle">Il calcolatore del voto di laurea usa la formula standard italiana: media ponderata in 30 → proporzione su 110, più eventuali punti tesi/bonus specifici del tuo ateneo.</p>
+    <form method="post" action="{{ url_for('update_university_settings') }}" class="grid-form">
+        <label>Media obiettivo (su 30)
+            <input type="number" step="0.1" min="18" max="30" name="target_average" value="{{ target_average if target_average is not none else '' }}" placeholder="es. 28">
+        </label>
+        <label>CFU totali del corso di laurea
+            <input type="number" step="1" name="total_cfu_required" value="{{ uni_settings.total_cfu_required | round(0) | int }}" required>
+        </label>
+        <label>Punti tesi previsti (su 110)
+            <input type="number" step="0.5" name="thesis_points" value="{{ uni_settings.thesis_points }}">
+        </label>
+        <label>Punti bonus previsti (Erasmus, tempo, extra)
+            <input type="number" step="0.5" name="bonus_points" value="{{ uni_settings.bonus_points }}">
+        </label>
+        <button type="submit" class="btn btn-primary">Salva impostazioni</button>
+    </form>
+</section>
+{% endblock %}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Life Dashboard{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/chart.umd.js') }}"></script>
+</head>
+<body>
+    <div class="app-shell">
+        <nav class="topnav">
+            <a href="{{ url_for('dashboard') }}" class="brand">Life Dashboard</a>
+            <button class="nav-toggle" id="navToggle" aria-label="Menu">☰</button>
+            <div class="nav-links" id="navLinks">
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('diet') }}">Diet</a>
+                <a href="{{ url_for('weight_page') }}">Weight</a>
+                <a href="{{ url_for('money') }}">Money</a>
+                <a href="{{ url_for('life_stats') }}">Life Stats</a>
+                <a href="{{ url_for('university') }}">University</a>
+                <a href="{{ url_for('history') }}">History</a>
+                <a href="{{ url_for('settings_page') }}">Settings</a>
+            </div>
+        </nav>
+
+        <main class="content">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

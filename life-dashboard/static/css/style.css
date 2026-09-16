@@ -1,0 +1,414 @@
+/* ---------------------------------------------------------------------
+   Life Dashboard - design system
+   Palette scura ma "calda", ispirata a dashboard moderne (Notion/Apple
+   Health) piuttosto che a un pannello admin: meno saturazione, più aria,
+   tipografia con gerarchia più marcata.
+--------------------------------------------------------------------- */
+
+:root {
+    /* Superfici */
+    --bg: #12131a;
+    --surface: #191b24;
+    --surface-2: #21242f;
+    --surface-hover: #2a2e3b;
+    --border: #2c2f3b;
+    --border-soft: #23252f;
+
+    /* Testo */
+    --text: #eceef3;
+    --text-muted: #8b90a3;
+    --text-faint: #5c6178;
+
+    /* Colori semantici (usati sia in CSS sia letti da JS per Chart.js) */
+    --accent: #6c8cff;
+    --accent-soft: #6c8cff26;
+    --accent-dark: #5675e0;
+
+    --color-weight: #6c8cff;
+    --color-study: #34c98f;
+    --color-calories: #f5a35c;
+    --color-expenses: #ef6f6f;
+    --color-sleep: #6c8cff;
+    --color-reading: #f5a35c;
+    --color-gym: #b28cf0;
+
+    --chart-grid: #ffffff10;
+
+    --danger: #ef6f6f;
+    --success: #34c98f;
+
+    --radius: 14px;
+    --radius-sm: 9px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    -webkit-font-smoothing: antialiased;
+}
+
+a { color: var(--accent); text-decoration: none; }
+
+.app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+/* --- Navigazione --- */
+.topnav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    background: rgba(25, 27, 36, 0.85);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border-soft);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.brand {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: var(--text);
+    letter-spacing: -0.01em;
+}
+
+.nav-links {
+    display: flex;
+    gap: 22px;
+}
+
+.nav-links a {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    font-weight: 500;
+    transition: color 0.15s ease;
+}
+
+.nav-links a:hover { color: var(--text); }
+
+.nav-toggle {
+    display: none;
+    background: none;
+    border: none;
+    color: var(--text);
+    font-size: 1.4rem;
+    cursor: pointer;
+}
+
+/* --- Contenuto --- */
+.content {
+    flex: 1;
+    padding: 28px 24px 48px;
+    max-width: 1080px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.page-title {
+    margin: 0 0 4px 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+}
+
+.page-subtitle { color: var(--text-muted); margin: 0 0 20px 0; font-size: 0.92rem; }
+
+.section-heading {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin: 28px 0 10px 0;
+}
+
+.section-heading:first-child { margin-top: 0; }
+
+/* --- Card grid --- */
+.card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.card {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 16px 18px;
+    transition: border-color 0.15s ease;
+}
+
+.card:hover { border-color: var(--border); }
+
+.card-label {
+    color: var(--text-muted);
+    font-size: 0.78rem;
+    font-weight: 500;
+    margin-bottom: 8px;
+}
+
+.card-value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    line-height: 1.15;
+}
+
+.card-sub { color: var(--text-faint); font-size: 0.78rem; margin-top: 8px; }
+
+.progress-bar {
+    background: var(--surface-2);
+    border-radius: 5px;
+    height: 6px;
+    margin-top: 12px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    background: var(--accent);
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.3s ease;
+}
+
+/* --- Panel (sezioni) --- */
+.panel {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: var(--radius);
+    padding: 20px 22px;
+    margin-bottom: 16px;
+}
+
+.panel h2 {
+    margin: 0 0 14px 0;
+    font-size: 1rem;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+}
+
+/* --- Money summary compatto (dashboard) --- */
+.money-summary {
+    display: flex;
+    gap: 28px;
+    flex-wrap: wrap;
+}
+
+.money-summary > div { display: flex; flex-direction: column; gap: 4px; }
+.money-summary .label { color: var(--text-muted); font-size: 0.8rem; }
+.money-summary .value { font-size: 1.15rem; font-weight: 700; }
+
+/* --- Grafici --- */
+.chart-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 14px;
+}
+
+.chart-box {
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    min-height: 200px;
+}
+
+/* --- Azioni rapide --- */
+.quick-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* --- Bottoni --- */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    background: var(--surface-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 15px;
+    cursor: pointer;
+    font-size: 0.87rem;
+    font-weight: 500;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.btn:hover { background: var(--surface-hover); border-color: var(--text-faint); }
+
+.btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+}
+
+.btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+
+.btn-icon {
+    background: none;
+    border: none;
+    color: var(--text-faint);
+    cursor: pointer;
+    font-size: 0.95rem;
+    padding: 4px;
+    border-radius: 6px;
+    transition: color 0.15s ease, background 0.15s ease;
+}
+
+.btn-icon:hover { color: var(--danger); background: var(--surface-2); }
+
+/* --- Form --- */
+.grid-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 12px;
+    align-items: end;
+}
+
+.grid-form label, .inline-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.checkbox-label {
+    flex-direction: row !important;
+    align-items: center;
+    gap: 8px !important;
+}
+
+input, select {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 9px 11px;
+    color: var(--text);
+    font-size: 0.88rem;
+    font-family: inherit;
+}
+
+input:focus, select:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.inline-form {
+    display: flex;
+    gap: 14px;
+    align-items: end;
+    margin-bottom: 18px;
+    flex-wrap: wrap;
+}
+
+/* --- Tabelle --- */
+.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.87rem;
+}
+
+.data-table th, .data-table td {
+    text-align: left;
+    padding: 9px 10px;
+    border-bottom: 1px solid var(--border-soft);
+}
+
+.data-table th {
+    color: var(--text-faint);
+    font-weight: 600;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.data-table tr:last-child td { border-bottom: none; }
+
+.empty-state {
+    color: var(--text-faint);
+    font-style: italic;
+    font-size: 0.88rem;
+}
+
+/* --- Orario lezioni (University) --- */
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(135px, 1fr));
+    gap: 10px;
+    margin-top: 18px;
+}
+
+.schedule-day {
+    background: var(--surface-2);
+    border-radius: var(--radius-sm);
+    padding: 10px;
+}
+
+.schedule-day h3 {
+    margin: 0 0 8px 0;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-faint);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+}
+
+.schedule-slot {
+    background: var(--surface);
+    border: 1px solid var(--border-soft);
+    border-radius: 8px;
+    padding: 8px;
+    margin-bottom: 8px;
+    font-size: 0.83rem;
+    position: relative;
+}
+
+.schedule-time {
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 0.76rem;
+}
+
+.schedule-course { font-weight: 600; margin-top: 2px; }
+.schedule-location { color: var(--text-faint); font-size: 0.74rem; margin-top: 2px; }
+
+.schedule-slot form { position: absolute; top: 6px; right: 6px; }
+
+/* --- Responsive --- */
+@media (max-width: 720px) {
+    .nav-toggle { display: block; }
+
+    .nav-links {
+        display: none;
+        position: absolute;
+        top: 57px;
+        left: 0;
+        right: 0;
+        background: var(--surface);
+        flex-direction: column;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        gap: 14px;
+    }
+
+    .nav-links.open { display: flex; }
+
+    .content { padding: 18px 16px 40px; }
+
+    .data-table { display: block; overflow-x: auto; white-space: nowrap; }
+
+    .card-grid { grid-template-columns: repeat(2, 1fr); }
+}

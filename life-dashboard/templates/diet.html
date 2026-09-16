@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block title %}Diet - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Diet</h1>
+
+<form method="get" class="inline-form">
+    <label>Data
+        <input type="date" name="date" value="{{ day }}" onchange="this.form.submit()">
+    </label>
+</form>
+
+<section class="card-grid">
+    <div class="card">
+        <div class="card-label">Calorie</div>
+        <div class="card-value">{{ nutrition.calories | round(0) | int }} / {{ settings.calorie_target | round(0) | int }} kcal</div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ [(nutrition.calories / settings.calorie_target * 100) if settings.calorie_target else 0, 100] | min }}%"></div>
+        </div>
+        <div class="card-sub">Rimanenti: {{ (settings.calorie_target - nutrition.calories) | round(0) | int }} kcal</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Proteine</div>
+        <div class="card-value">{{ nutrition.protein | round(0) | int }} / {{ settings.protein_target | round(0) | int }} g</div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ [(nutrition.protein / settings.protein_target * 100) if settings.protein_target else 0, 100] | min }}%"></div>
+        </div>
+        <div class="card-sub">Rimanenti: {{ (settings.protein_target - nutrition.protein) | round(0) | int }} g</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Carboidrati</div>
+        <div class="card-value">{{ nutrition.carbs | round(0) | int }} g</div>
+    </div>
+    <div class="card">
+        <div class="card-label">Grassi</div>
+        <div class="card-value">{{ nutrition.fats | round(0) | int }} g</div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Aggiungi alimento</h2>
+    <form method="post" action="{{ url_for('add_food') }}" class="grid-form">
+        <input type="hidden" name="date" value="{{ day }}">
+        <label>Pasto
+            <select name="meal" required>
+                {% for m in meals %}<option value="{{ m }}">{{ m }}</option>{% endfor %}
+            </select>
+        </label>
+        <label>Alimento
+            <input type="text" name="food_name" required placeholder="es. Petto di pollo">
+        </label>
+        <label>Quantità
+            <input type="text" name="quantity" placeholder="es. 150g">
+        </label>
+        <label>Calorie (kcal)
+            <input type="number" step="0.1" name="calories" required>
+        </label>
+        <label>Proteine (g)
+            <input type="number" step="0.1" name="protein">
+        </label>
+        <label>Carboidrati (g)
+            <input type="number" step="0.1" name="carbs">
+        </label>
+        <label>Grassi (g)
+            <input type="number" step="0.1" name="fats">
+        </label>
+        <button type="submit" class="btn btn-primary">Aggiungi</button>
+    </form>
+</section>
+
+{% for meal in meals %}
+<section class="panel">
+    <h2>{{ meal }}</h2>
+    {% if entries_by_meal[meal] %}
+        <table class="data-table">
+            <thead>
+                <tr><th>Alimento</th><th>Quantità</th><th>Kcal</th><th>Prot</th><th>Carb</th><th>Grassi</th><th></th></tr>
+            </thead>
+            <tbody>
+                {% for e in entries_by_meal[meal] %}
+                <tr>
+                    <td>{{ e.food_name }}</td>
+                    <td>{{ e.quantity }}</td>
+                    <td>{{ e.calories | round(0) | int }}</td>
+                    <td>{{ e.protein | round(0) | int }}</td>
+                    <td>{{ e.carbs | round(0) | int }}</td>
+                    <td>{{ e.fats | round(0) | int }}</td>
+                    <td>
+                        <form method="post" action="{{ url_for('delete_food', entry_id=e.id) }}">
+                            <input type="hidden" name="date" value="{{ day }}">
+                            <button type="submit" class="btn-icon" title="Elimina">✕</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p class="empty-state">Nessuna voce per {{ meal.lower() }}.</p>
+    {% endif %}
+</section>
+{% endfor %}
+{% endblock %}

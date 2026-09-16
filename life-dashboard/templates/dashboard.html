@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+{% block title %}Dashboard - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Oggi</h1>
+<p class="page-subtitle">{{ today }}</p>
+
+<div class="section-heading">Today</div>
+<section class="card-grid">
+    <div class="card">
+        <div class="card-label">Calorie</div>
+        <div class="card-value">{{ nutrition.calories | round(0) | int }} <span style="color:var(--text-faint); font-weight:500; font-size:0.85rem;">/ {{ settings.calorie_target | round(0) | int }} kcal</span></div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ [(nutrition.calories / settings.calorie_target * 100) if settings.calorie_target else 0, 100] | min }}%"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Proteine</div>
+        <div class="card-value">{{ nutrition.protein | round(0) | int }} <span style="color:var(--text-faint); font-weight:500; font-size:0.85rem;">/ {{ settings.protein_target | round(0) | int }} g</span></div>
+        <div class="progress-bar">
+            <div class="progress-fill" style="width: {{ [(nutrition.protein / settings.protein_target * 100) if settings.protein_target else 0, 100] | min }}%"></div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Peso</div>
+        <div class="card-value">{{ weight if weight else "—" }}{% if weight %}<span style="color:var(--text-faint); font-weight:500; font-size:0.85rem;"> kg</span>{% endif %}</div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Sonno</div>
+        <div class="card-value">{{ stats.sleep_hours if stats.sleep_hours is defined and stats.sleep_hours is not none else "—" }}{% if stats.sleep_hours %}<span style="color:var(--text-faint); font-weight:500; font-size:0.85rem;"> h</span>{% endif %}</div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Studio</div>
+        <div class="card-value">{{ stats.study_hours if stats.study_hours is defined and stats.study_hours is not none else "—" }}{% if stats.study_hours %}<span style="color:var(--text-faint); font-weight:500; font-size:0.85rem;"> h</span>{% endif %}</div>
+    </div>
+
+    <div class="card">
+        <div class="card-label">Palestra</div>
+        <div class="card-value">{% if stats.gym %}✓{% else %}—{% endif %}</div>
+    </div>
+</section>
+
+<div class="section-heading">Money</div>
+<section class="panel">
+    <div class="money-summary">
+        <div><span class="label">Spese oggi</span><span class="value">€{{ "%.2f"|format(money_today) }}</span></div>
+        <div><span class="label">Spese mese</span><span class="value">€{{ "%.2f"|format(money_month) }}</span></div>
+        <div><span class="label">Saldo netto (mese)</span><span class="value" style="color: {{ 'var(--success)' if net_month >= 0 else 'var(--danger)' }};">{{ '+' if net_month >= 0 else '' }}€{{ "%.2f"|format(net_month) }}</span></div>
+        <div><span class="label">Categoria top</span><span class="value">{{ top_category if top_category else "—" }}</span></div>
+    </div>
+</section>
+
+<div class="section-heading">Progress</div>
+<section class="panel">
+    <div class="chart-grid">
+        <div class="chart-box"><canvas id="chartWeight"></canvas></div>
+        <div class="chart-box"><canvas id="chartStudy"></canvas></div>
+        <div class="chart-box"><canvas id="chartCalories"></canvas></div>
+        <div class="chart-box"><canvas id="chartExpenses"></canvas></div>
+    </div>
+</section>
+
+<div class="section-heading">Quick actions</div>
+<section class="quick-actions">
+    <a class="btn" href="{{ url_for('diet') }}">+ Food</a>
+    <a class="btn" href="{{ url_for('money') }}">+ Expense</a>
+    <a class="btn" href="{{ url_for('life_stats') }}">+ Study / Stats</a>
+    <a class="btn" href="{{ url_for('weight_page') }}">+ Weight</a>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const chartsData = {{ charts | tojson }};
+    const rootStyle = getComputedStyle(document.documentElement);
+    const colorOf = (name) => rootStyle.getPropertyValue(name).trim();
+
+    function buildLineChart(key, canvasId, label, colorVar) {
+        const data = chartsData[key];
+        if (!data || data.labels.length === 0) return;
+        const color = colorOf(colorVar);
+        new Chart(document.getElementById(canvasId), {
+            type: 'line',
+            data: {
+                labels: data.labels,
+                datasets: [{
+                    label: label,
+                    data: data.values,
+                    borderColor: color,
+                    backgroundColor: color + '26',
+                    tension: 0.35,
+                    fill: true,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: colorOf('--chart-grid') } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    buildLineChart('weight', 'chartWeight', 'Peso (kg)', '--color-weight');
+    buildLineChart('study', 'chartStudy', 'Studio (h)', '--color-study');
+    buildLineChart('calories', 'chartCalories', 'Calorie (kcal)', '--color-calories');
+    buildLineChart('expenses', 'chartExpenses', 'Spese (€)', '--color-expenses');
+</script>
+{% endblock %}

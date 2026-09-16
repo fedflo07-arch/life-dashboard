@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block title %}Life Stats - Life Dashboard{% endblock %}
+
+{% block content %}
+<h1 class="page-title">Life Stats</h1>
+
+<form method="get" class="inline-form">
+    <label>Data
+        <input type="date" name="date" value="{{ day }}" onchange="this.form.submit()">
+    </label>
+</form>
+
+<section class="panel">
+    <h2>Statistiche del giorno</h2>
+    <form method="post" action="{{ url_for('add_life_stats') }}" class="grid-form">
+        <input type="hidden" name="date" value="{{ day }}">
+        <label>Sonno (h)
+            <input type="number" step="0.1" name="sleep_hours" value="{{ today_data.sleep_hours if today_data.sleep_hours is defined else '' }}">
+        </label>
+        <label>Studio (h)
+            <input type="number" step="0.1" name="study_hours" value="{{ today_data.study_hours if today_data.study_hours is defined else '' }}">
+        </label>
+        <label>Lettura (min)
+            <input type="number" step="1" name="reading_minutes" value="{{ today_data.reading_minutes if today_data.reading_minutes is defined else '' }}">
+        </label>
+        <label>Acqua (L)
+            <input type="number" step="0.1" name="water_liters" value="{{ today_data.water_liters if today_data.water_liters is defined else '' }}">
+        </label>
+        <label>Passi
+            <input type="number" step="1" name="steps" value="{{ today_data.steps if today_data.steps is defined else '' }}">
+        </label>
+        <label>Umore (1-10)
+            <input type="number" step="1" min="1" max="10" name="mood" value="{{ today_data.mood if today_data.mood is defined else '' }}">
+        </label>
+        <label class="checkbox-label">
+            <input type="checkbox" name="gym" {% if today_data.gym %}checked{% endif %}>
+            Palestra fatta oggi
+        </label>
+        <button type="submit" class="btn btn-primary">Salva</button>
+    </form>
+</section>
+
+<section class="panel">
+    <h2>Trend (ultimi 30 giorni)</h2>
+    <div class="chart-grid">
+        <div class="chart-box"><canvas id="chartSleep"></canvas></div>
+        <div class="chart-box"><canvas id="chartStudy"></canvas></div>
+        <div class="chart-box"><canvas id="chartReading"></canvas></div>
+        <div class="chart-box"><canvas id="chartGym"></canvas></div>
+    </div>
+</section>
+
+<section class="panel">
+    <h2>Storico</h2>
+    {% if history %}
+    <table class="data-table">
+        <thead>
+            <tr><th>Data</th><th>Sonno</th><th>Studio</th><th>Lettura</th><th>Acqua</th><th>Passi</th><th>Umore</th><th>Palestra</th><th></th></tr>
+        </thead>
+        <tbody>
+            {% for h in history %}
+            <tr>
+                <td>{{ h.date }}</td>
+                <td>{{ h.sleep_hours if h.sleep_hours is not none else "—" }}</td>
+                <td>{{ h.study_hours if h.study_hours is not none else "—" }}</td>
+                <td>{{ h.reading_minutes if h.reading_minutes is not none else "—" }}</td>
+                <td>{{ h.water_liters if h.water_liters is not none else "—" }}</td>
+                <td>{{ h.steps if h.steps is not none else "—" }}</td>
+                <td>{{ h.mood if h.mood is not none else "—" }}</td>
+                <td>{% if h.gym %}✓{% else %}—{% endif %}</td>
+                <td>
+                    <form method="post" action="{{ url_for('delete_life_stats', date_str=h.date) }}">
+                        <button type="submit" class="btn-icon" title="Elimina">✕</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+        <p class="empty-state">Nessuna statistica registrata ancora.</p>
+    {% endif %}
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const charts = {{ charts | tojson }};
+    const rootStyle = getComputedStyle(document.documentElement);
+    const colorOf = (name) => rootStyle.getPropertyValue(name).trim();
+
+    function buildChart(id, label, values, colorVar, type) {
+        if (charts.labels.length === 0) return;
+        const color = colorOf(colorVar);
+        new Chart(document.getElementById(id), {
+            type: type || 'line',
+            data: {
+                labels: charts.labels,
+                datasets: [{
+                    label: label,
+                    data: values,
+                    borderColor: color,
+                    backgroundColor: color + (type === 'bar' ? 'ff' : '26'),
+                    tension: 0.35,
+                    fill: type !== 'bar',
+                    pointRadius: 0,
+                    borderWidth: 2,
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { color: colorOf('--chart-grid') } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    }
+
+    buildChart('chartSleep', 'Sonno (h)', charts.sleep, '--color-sleep');
+    buildChart('chartStudy', 'Studio (h)', charts.study, '--color-study');
+    buildChart('chartReading', 'Lettura (min)', charts.reading, '--color-reading');
+    buildChart('chartGym', 'Palestra', charts.gym, '--color-gym', 'bar');
+</script>
+{% endblock %}
